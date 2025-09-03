@@ -10,13 +10,16 @@ CREATE TABLE clients_requests (
     profile_id INTEGER NOT NULL REFERENCES profiles(id),
     company_name TEXT NOT NULL,
     email TEXT,
-    phone TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     trading TEXT,
     location TEXT,
     language TEXT,
-    reminder_frequency TEXT
+    reminder_frequency TEXT,
+    colaborador_nombre TEXT,
+    colaborador_cedula TEXT,
+    created_by_email TEXT
 );
+
 
 -- Crear tabla de tipos de documentos requeridos por perfil
 CREATE TABLE document_types (

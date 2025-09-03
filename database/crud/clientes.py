@@ -2,13 +2,17 @@ import psycopg2
 import os
 
 def get_connection():
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "db"),
-        dbname=os.getenv("DB_NAME", "compliance_db"),
-        user=os.getenv("DB_USER", "admin"),
-        password=os.getenv("DB_PASSWORD", "admin"),
-        port=os.getenv("DB_PORT", 5432)
-    )
+    # 1. Intenta leer DATABASE_URL de Streamlit Cloud (secrets) o de las env vars locales
+    try:
+        import streamlit as st
+        url = st.secrets["DATABASE_URL"]
+    except Exception:
+        url = os.getenv("DATABASE_URL")
+
+    if not url:
+        raise ValueError("DATABASE_URL no está definido en secrets ni en el entorno.")
+
+    return psycopg2.connect(dsn=url)
 
 def get_profile_id(profile_name):
     conn = get_connection()
