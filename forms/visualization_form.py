@@ -100,9 +100,6 @@ def progress_view():
 
         total_required = sum(1 for d in required_docs if d.get("is_required"))
 
-        # Cuenta como "cargado" si:
-        # - No es "Verificaciones de seguridad": drive_link no vacío
-        # - Es "Verificaciones de seguridad": hay al menos un enlace en el CSV
         uploaded_required = 0
         for d in required_docs:
             if not d.get("is_required"):
@@ -120,7 +117,6 @@ def progress_view():
 
         completion = int(round((uploaded_required / total_required) * 100)) if total_required else 100
 
-        # ---- ENCABEZADO: progreso y resumen ----
         colA, colB = st.columns([1, 3])
         with colA:
             st.metric("Completitud", f"{completion}%")

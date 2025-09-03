@@ -5,6 +5,7 @@ from services.sheets_writer import save_request
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+
 def forms():
 
     tipo_solicitud = st.selectbox(
@@ -34,7 +35,6 @@ def forms():
         requested_by = st.text_input("Nombre de quien solicita", key="solicitante_proveedor")
         requested_by_type = "solicitante_proveedor"
 
-    # -------- Ramas específicas --------
     if tipo_solicitud.lower() == "operador logístico":
         nombre_completo = st.text_input("Nombre completo del colaborador", key="nombre_colaborador")
         cedula = st.text_input("Cédula", key="cedula_colaborador")
