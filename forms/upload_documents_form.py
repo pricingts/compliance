@@ -3,7 +3,8 @@
 import os
 import unicodedata
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from database.db import SessionLocal
 from database.crud.documents import (
@@ -16,33 +17,37 @@ from database.crud.documents import (
     upsert_uploaded_document,
     get_request_meta,
     update_request_meta,
+    get_first_upload_at, 
+    set_first_upload_at_if_null
 )
 from services.google_drive_utils import init_drive, find_or_create_folder, upload_to_drive
 
+CO_TZ = ZoneInfo("America/Bogota")
 
-# =========================
-# Helpers
-# =========================
 def _slug(s: str) -> str:
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
     return s.strip().lower()
 
 
 def is_security_verification(doc_name: str) -> bool:
-    # Acepta variantes con/sin acentos o espacios
     return "verificaciones de seguridad" in _slug(doc_name)
-
 
 def split_csv_list(s: str):
     if not s:
         return []
-    # separa por coma y limpia espacios
     return [x.strip() for x in s.split(",") if x and x.strip()]
 
-
 def sanitize_name_for_csv(name: str) -> str:
-    # evita comas que rompan el CSV; también sanea separadores de ruta
     return name.replace(",", " - ").replace("/", "_").replace("\\", "_").strip()
+
+
+def _to_colombia_tz(dt: datetime | None) -> datetime | None:
+
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(CO_TZ)
 
 
 def forms():
@@ -51,7 +56,6 @@ def forms():
     session = SessionLocal()
 
     try:
-        # 1) Selectboxes para buscar la solicitud
         companies = get_all_company_names(session)
         profiles = get_profiles_list(session)
 
@@ -105,9 +109,13 @@ def forms():
         selected_request = requests[idx if len(options) > 1 else 0]
         request_id = selected_request["id"]
 
-        # 3) Documentos requeridos del perfil + ya subidos para esta solicitud
+        first_upload_at_db = get_first_upload_at(session, request_id)
+        first_upload_at_co = _to_colombia_tz(first_upload_at_db)
+        if first_upload_at_co:
+            st.markdown(f"**Este cliente/proveedor fue creado el: {first_upload_at_co.strftime('%Y-%m-%d %H:%M')}**")
+
         required_docs = get_required_document_types(session, profile_id)
-        uploaded_map = get_uploaded_documents_map(session, request_id)  # {doc_type_id: {file_name, drive_link, ...}}
+        uploaded_map = get_uploaded_documents_map(session, request_id)
 
         st.caption("Sube los documentos. Los ya subidos muestran enlace.")
         uploaded_buffers = {}
@@ -289,6 +297,11 @@ def forms():
 
                     # 2) Guardar seguimiento y comentarios SIEMPRE
                     update_request_meta(session, request_id, seguimiento_text, comentarios_text)
+
+                    if any_file_selected and not first_upload_at:
+                        now_co = datetime.now(CO_TZ)
+                        set_first_upload_at_if_null(session, request_id, now_co)
+                        first_upload_at = now_co
 
                     # 3) Commit único
                     session.commit()

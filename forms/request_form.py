@@ -10,7 +10,7 @@ def forms():
 
     tipo_solicitud = st.selectbox(
         "Tipo de solicitud",
-        ["cliente", "proveedor", "operador logístico", "servicio transporte"],
+        ["cliente", "proveedor"],
         key="tipo_solicitud"
     )
 
@@ -35,39 +35,7 @@ def forms():
         requested_by = st.text_input("Nombre de quien solicita", key="solicitante_proveedor")
         requested_by_type = "solicitante_proveedor"
 
-    if tipo_solicitud.lower() == "operador logístico":
-        nombre_completo = st.text_input("Nombre completo del colaborador", key="nombre_colaborador")
-        cedula = st.text_input("Cédula", key="cedula_colaborador")
-
-        if st.button("Guardar", key="guardar_operador"):
-            if not nombre_completo or not cedula:
-                st.error("❌ Debes ingresar nombre completo y cédula.")
-                return
-
-            # Si aún no tienes función específica, reutiliza insert_client_request
-            request_id = insert_client_request(
-                profile_id=profile_id,
-                company_name=nombre_completo,  # campo obligatorio en tu modelo
-                requested_by=nombre_completo,
-                requested_by_type="operador_logistico"
-            )
-
-            save_request({
-                "request_id": request_id,
-                "profile_id": profile_id,
-                "tipo_solicitud": tipo_solicitud,
-                "colaborador_nombre": nombre_completo,
-                "colaborador_cedula": cedula
-            })
-
-            st.success(f"✅ Colaborador registrado con ID de solicitud: {request_id}")
-            st.write("**Nombre completo:**", nombre_completo)
-            st.write("**Cédula:**", cedula)
-            st.write("**Tipo de solicitud:**", tipo_solicitud)
-
-        return  # no seguir mostrando campos generales
-
-    # -------- Campos generales para cliente/proveedor/servicio transporte --------
+    # -------- Campos generales para cliente/proveedor --------
     col1, col2, col3 = st.columns(3)
     with col1:
         company_name = st.text_input("Nombre de la Compañía", key="nombre_compania")
@@ -130,14 +98,14 @@ def forms():
 
         # Feedback
         st.success(f"✅ Solicitud guardada correctamente")
-        st.write("**Nombre de la Compañía:**", company_name)
-        st.write("**Desde qué trading:**", trading)
-        st.write("**Ubicación:**", location or "—")
-        st.write("**Idioma:**", language)
-        st.write("**Correo electrónico:**", email or "—")
-        st.write("**Frecuencia de Recordatorio:**", reminder_frequency)
-        if requested_by_type == "comercial":
-            st.write("**Comercial:**", requested_by)
-        elif requested_by_type == "solicitante_proveedor":
-            st.write("**Solicitante (proveedor):**", requested_by)
-        st.write("**Tipo de solicitud:**", tipo_solicitud)
+        # st.write("**Nombre de la Compañía:**", company_name)
+        # st.write("**Desde qué trading:**", trading)
+        # st.write("**Ubicación:**", location or "—")
+        # st.write("**Idioma:**", language)
+        # st.write("**Correo electrónico:**", email or "—")
+        # st.write("**Frecuencia de Recordatorio:**", reminder_frequency)
+        # if requested_by_type == "comercial":
+        #     st.write("**Comercial:**", requested_by)
+        # elif requested_by_type == "solicitante_proveedor":
+        #     st.write("**Solicitante (proveedor):**", requested_by)
+        # st.write("**Tipo de solicitud:**", tipo_solicitud)

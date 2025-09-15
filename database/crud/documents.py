@@ -104,3 +104,45 @@ def update_request_meta(session, request_id: int, notification_followup: str = N
         """),
         {"nf": notification_followup, "gc": general_comments, "rid": request_id}
     )
+
+def get_first_upload_at(session, request_id: int):
+    row = session.execute(
+        text("SELECT first_upload_at FROM clients_requests WHERE id = :rid"),
+        {"rid": request_id}
+    ).one_or_none()
+    return row[0] if row else None
+
+def set_first_upload_at_if_null(session, request_id: int, dt):
+    session.execute(
+        text("""
+            UPDATE clients_requests
+            SET first_upload_at = COALESCE(first_upload_at, :dt)
+            WHERE id = :rid
+        """),
+        {"rid": request_id, "dt": dt}
+    )
+
+def get_requests_for_progress(session, only_for_email: str | None = None):
+
+    sql = text("""
+        SELECT
+            id,
+            company_name,
+            profile_id,
+            created_at,
+            created_by_email
+        FROM clients_requests
+        WHERE (:email IS NULL OR LOWER(created_by_email) = LOWER(:email))
+        ORDER BY created_at DESC
+    """)
+    rows = session.execute(sql, {"email": only_for_email}).fetchall()
+    return [
+        {
+            "id": r.id,
+            "company_name": r.company_name,
+            "profile_id": r.profile_id,
+            "created_at": r.created_at,
+            "created_by_email": r.created_by_email,
+        }
+        for r in rows
+    ]

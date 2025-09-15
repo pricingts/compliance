@@ -47,8 +47,6 @@ CREATE TABLE uploaded_documents (
 INSERT INTO profiles (name) VALUES
   ('cliente'),
   ('proveedor'),
-  ('servicio transporte'),
-  ('operador logístico');
 
 -- =============================
 -- DOCUMENTOS PARA PERFIL CLIENTE
@@ -94,21 +92,11 @@ INSERT INTO document_types (profile_id, name) VALUES
 ((SELECT id FROM profiles WHERE name = 'proveedor'), 'Documento de identificación Representante Legal'),
 ((SELECT id FROM profiles WHERE name = 'proveedor'), 'Referencia comercial'),
 ((SELECT id FROM profiles WHERE name = 'proveedor'), 'Referencia bancaria'),
-((SELECT id FROM profiles WHERE name = 'proveedor'), 'Certificados de Sistemas de Gestión');
-
--- =============================
--- DOCUMENTOS PARA PERFIL SERVICIO TRANSPORTE
--- =============================
-INSERT INTO document_types (profile_id, name) VALUES
-((SELECT id FROM profiles WHERE name = 'servicio transporte'), 'Habilitación Ministerio de Transporte'),
-((SELECT id FROM profiles WHERE name = 'servicio transporte'), 'Certificado SGSST (ARL)'),
-((SELECT id FROM profiles WHERE name = 'servicio transporte'), 'Plan de seguridad vial'),
-((SELECT id FROM profiles WHERE name = 'servicio transporte'), 'Documentos de limpieza y desinfección'),
-((SELECT id FROM profiles WHERE name = 'servicio transporte'), 'Plan de contingencia'),
-((SELECT id FROM profiles WHERE name = 'servicio transporte'), 'Póliza de Responsabilidad Civil');
-
--- =============================
--- DOCUMENTOS PARA PERFIL OPERADOR LOGÍSTICO
--- =============================
-INSERT INTO document_types (profile_id, name) VALUES
-((SELECT id FROM profiles WHERE name = 'operador logístico'), 'Certificación BASC');
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Certificados de Sistemas de Gestión'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Habilitación Ministerio de Transporte'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Certificado SGSST (ARL)'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Plan de seguridad vial'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Documentos de limpieza y desinfección'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Plan de contingencia'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Póliza de Responsabilidad Civil'),
+((SELECT id FROM profiles WHERE name = 'proveedor'), 'Certificación BASC')

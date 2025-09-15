@@ -19,7 +19,7 @@ def identity_role(email: str | None) -> str:
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("images/logo_trading.png", use_container_width=True)
+    st.image("images/logo_trading.png")
 
 check_authentication()
 
@@ -27,6 +27,7 @@ user_email = getattr(getattr(st, "user", None), "email", None)
 user_name = getattr(getattr(st, "user", None), "name", "Usuario")
 
 role = identity_role(user_email)
+is_admin = (role == "compliance")
 
 # Páginas visibles por rol
 pages_by_role: dict[str, list[str]] = {
@@ -49,4 +50,4 @@ elif page == "Registro de Proveedores/ Clientes":
 
 elif page == "Progreso":
     import views.visualization as nt
-    nt.show()
+    nt.show(current_user_email=user_email, is_admin=is_admin)
