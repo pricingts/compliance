@@ -4,11 +4,12 @@ import streamlit as st
 import unicodedata
 from database.db import SessionLocal
 from database.crud.documents import (
-    get_profile_id_by_name,
+    get_profiles_list,           # <- lista de NOMBRES de perfil
+    get_profile_id_by_name,      # <- resuelve ID a partir del nombre
     get_required_document_types,
     get_uploaded_documents_map,
     get_request_meta,
-    get_requests_for_progress,  # <- devuelve todas o por email del creador
+    get_requests_for_progress,   # <- devuelve todas o por email del creador
 )
 
 # --------------------
@@ -47,10 +48,22 @@ def show(current_user_email: str | None = None, is_admin: bool = False):
             st.info("No hay solicitudes para mostrar.")
             return
 
-        # 2) Selectores de compañía y perfil basados en el conjunto filtrado
+        # 2) Construir listas a partir del conjunto filtrado
         companies = sorted({r.get("company_name") for r in requests if r.get("company_name")})
-        profiles_ids = sorted({r.get("profile_id") for r in requests if r.get("profile_id") is not None})
 
+        # Mapa nombre->id para TODOS los perfiles definidos en el sistema
+        all_profile_names = get_profiles_list(session) or []  # p.ej. ["Cliente", "Proveedor", ...]
+        name_to_id = {}
+        for name in all_profile_names:
+            pid = get_profile_id_by_name(session, name)
+            if pid:
+                name_to_id[name] = pid
+
+        # Perfiles realmente presentes en las solicitudes filtradas (disponibles para selección)
+        present_profile_ids = {r.get("profile_id") for r in requests if r.get("profile_id") is not None}
+        available_profiles = [(name, pid) for name, pid in name_to_id.items() if pid in present_profile_ids]
+        # Orden alfabético por nombre
+        available_profiles.sort(key=lambda x: x[0])
 
         col1, col2 = st.columns(2)
         with col1:
@@ -62,24 +75,22 @@ def show(current_user_email: str | None = None, is_admin: bool = False):
                 key="pv_company_selector"
             )
         with col2:
-            # Mostramos IDs de perfil por simplicidad; si quieres nombres, agrega una función que mapee id->name
-            # o un select anidado tras elegir compañía.
-            profile_id_text = st.selectbox(
-                "Perfil (ID)",
-                [str(pid) for pid in profiles_ids],
+            profile_name = st.selectbox(
+                "Perfil",
+                [name for (name, _) in available_profiles],
                 index=None,
                 placeholder="Selecciona el perfil...",
                 key="pv_profile_selector"
             )
 
-        if not company_name or not profile_id_text:
+        if not company_name or not profile_name:
             st.info("Selecciona compañía y perfil para continuar.")
             return
 
-        try:
-            profile_id = int(profile_id_text)
-        except Exception:
-            st.error("❌ Perfil inválido.")
+        # Resolver profile_id a partir del nombre elegido
+        profile_id = name_to_id.get(profile_name)
+        if not profile_id:
+            st.error("❌ El perfil seleccionado no existe en la base de datos.")
             return
 
         # 3) Filtrar las solicitudes (dentro del conjunto permitido) por compañía y perfil
@@ -92,7 +103,10 @@ def show(current_user_email: str | None = None, is_admin: bool = False):
             return
 
         # 4) Elegir solicitud si hay varias
-        options = [f"ID {r['id']} • {r['created_at'].strftime('%Y-%m-%d %H:%M')}" for r in filtered_requests]
+        options = [
+            f"ID {r['id']} • {r['created_at'].strftime('%Y-%m-%d %H:%M')} • {r.get('created_by_email') or ''}"
+            for r in filtered_requests
+        ]
         idx = 0
         if len(options) > 1:
             idx = st.selectbox(
