@@ -16,9 +16,7 @@ from database.crud.documents import (
     get_uploaded_documents_map,
     upsert_uploaded_document,
     get_request_meta,
-    update_request_meta,
-    get_first_upload_at, 
-    set_first_upload_at_if_null
+    update_request_meta
 )
 from services.google_drive_utils import init_drive, find_or_create_folder, upload_to_drive
 
@@ -109,10 +107,6 @@ def forms():
         selected_request = requests[idx if len(options) > 1 else 0]
         request_id = selected_request["id"]
 
-        first_upload_at_db = get_first_upload_at(session, request_id)
-        first_upload_at_co = _to_colombia_tz(first_upload_at_db)
-        if first_upload_at_co:
-            st.markdown(f"**Este cliente/proveedor fue creado el: {first_upload_at_co.strftime('%Y-%m-%d %H:%M')}**")
 
         required_docs = get_required_document_types(session, profile_id)
         uploaded_map = get_uploaded_documents_map(session, request_id)
@@ -298,12 +292,6 @@ def forms():
                     # 2) Guardar seguimiento y comentarios SIEMPRE
                     update_request_meta(session, request_id, seguimiento_text, comentarios_text)
 
-                    if any_file_selected and not first_upload_at:
-                        now_co = datetime.now(CO_TZ)
-                        set_first_upload_at_if_null(session, request_id, now_co)
-                        first_upload_at = now_co
-
-                    # 3) Commit único
                     session.commit()
 
                     if changes:
